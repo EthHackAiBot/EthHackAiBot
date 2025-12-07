@@ -5,18 +5,17 @@ const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
-// THIS LINE WAS MISSING — fixes everything
+// THIS LINE WAS MISSING — THIS IS THE FIX
 app.use(express.json());
 
-// ———— BOT COMMANDS ————
-bot.start((ctx) => ctx.reply('EthHack AI Bot is LIVE! 🚀\nType /live for real-time threats'));
+// Simple commands so you see it works instantly
+bot.start((ctx) => ctx.reply('EthHack AI Bot is ALIVE! 🚀\nType /live for real-time threats'));
 bot.command('live', (ctx) => ctx.reply('🔴 Scanning Ethereum + 50 chains...\nNo active threats right now – all clear!'));
 
-// ———— WEBHOOK ————
+// Webhook
 app.use(bot.webhookCallback('/webhook'));
 
-// ———— HEALTH ————
-app.get('/', (req, res) => res.send('EthHack AI Bot is running'));
+app.get('/', (req, res) => res.send('EthHack AI Bot running'));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Bot LIVE on port ${PORT}`));
