@@ -17,5 +17,5 @@ app.use(bot.webhookCallback('/webhook'));
 
 app.get('/', (req, res) => res.send('EthHack AI Bot running'));
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8443;
 app.listen(PORT, () => console.log(`Bot LIVE on port ${PORT}`));
