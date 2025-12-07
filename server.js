@@ -90,7 +90,7 @@ async function getLatestThreats() {
 app.use(bot.webhookCallback('/webhook'));
 app.get('/', (req, res) => res.send('EthHack AI Bot is alive'));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Bot running on port ${PORT}`));
 
 bot.launch();
