@@ -5,17 +5,29 @@ const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
-// THIS LINE WAS MISSING — THIS IS THE FIX
+// CRITICAL: needed for Telegram to talk to us
 app.use(express.json());
 
-// Simple commands so you see it works instantly
-bot.start((ctx) => ctx.reply('EthHack AI Bot is ALIVE! 🚀\nType /live for real-time threats'));
-bot.command('live', (ctx) => ctx.reply('🔴 Scanning Ethereum + 50 chains...\nNo active threats right now – all clear!'));
+// Simple test commands
+bot.start((ctx) => ctx.reply('EthHack AI Bot is ALIVE! 🚀'));
+bot.command('live', (ctx) => ctx.reply('Scanning... no threats right now'));
+bot.command('upgrade', (ctx) => ctx.reply('Pro upgrade coming soon – $19 lifetime'));
 
-// Webhook
+// Webhook route
 app.use(bot.webhookCallback('/webhook'));
 
-app.get('/', (req, res) => res.send('EthHack AI Bot running'));
+// Health check
+app.get('/', (req, res) => res.send('EthHack AI Bot is running'));
 
-const PORT = process.env.PORT || 8443;
-app.listen(PORT, () => console.log(`Bot LIVE on port ${PORT}`));
+// Graceful shutdown — THIS STOPS THE SIGTERM CRASH
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received – shutting down gracefully');
+  process.exit(0);
+});
+
+// Start server on the port Railway expects
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Bot LIVE and listening on port ${PORT}`);
+  console.log(`Webhook URL: /webhook`);
+});
