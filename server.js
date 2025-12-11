@@ -5,9 +5,8 @@ const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
-app.use(express.json()); // ← This was missing or misplaced in some versions
+app.use(express.json());   // ← keep only this one line (no comment)
 
-// Instant test commands
 bot.start((ctx) => ctx.replyWithMarkdown(`
 *Welcome to EthHack AI Bot* 🚀
 
@@ -19,10 +18,10 @@ $19 lifetime → *instant alerts (<8s)*
 Type /live to see latest threats
 Type /upgrade for lifetime pro
 `));
+
 bot.command('live', (ctx) => ctx.reply('No active threats right now – all clear!'));
 bot.command('upgrade', (ctx) => ctx.reply('Pro upgrade coming soon – $19 lifetime'));
 
-// Webhook
 app.use('/webhook', bot.webhookCallback('/webhook'));
 
 app.get('/', (req, res) => res.send('EthHack AI Bot running'));
