@@ -1,29 +1,47 @@
-require('dotenv').config();
 const express = require('express');
-const { Telegraf } = require('telegraf');
-
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const path = require('path');
 const app = express();
 
-app.use(express.json());                     // ← THIS IS THE LINE THAT WAS MISSING
+// ───── Body parsing for forms / JSON (if you use it) ─────
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-bot.start((ctx) => ctx.replyWithMarkdownV2(`
-*Welcome to EthHack AI Bot* 🚀
+// ───── Serve static files (your HTML, CSS, images, etc.) ─────
+app.use(express.static(path.join(__dirname, 'public'))); 
+// ← make sure your index.html + assets are inside a folder called "public"
 
-Real\\-time EVM security alerts (rug\\-pulls, honeypots, phishing)
+// ───── Simple route for the root – serves your bot page ─────
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-Free tier → delayed alerts
-$19 lifetime → *instant alerts \\(<8s\\)*
+// ───── Health check route (Railway loves this) ─────
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
-Type /live to see latest threats
-Type /upgrade for lifetime pro
-`));
+// ───── YOUR EXISTING ROUTES BELOW THIS LINE ─────
+// Example placeholder routes – replace or add your real ones
+app.post('/add-wallet', (req, res) => {
+  // your wallet-adding logic here
+  res.json({ success: true, message: 'Wallet monitoring started' });
+});
 
-bot.command('live', (ctx) => ctx.reply('No active threats right now – all clear!'));
-bot.command('upgrade', (ctx) => ctx.reply('Pro upgrade coming soon – $19 lifetime'));
+app.get('/status', (req, res) => {
+  // your status check logic
+  res.json({ status: 'running', plan: 'lifetime' });
+});
 
-app.use('/webhook', bot.webhookCallback('/webhook'));
-app.get('/', (req, res) => res.send('EthHack AI Bot running'));
+// ───── Catch-all for nice 404 (optional) ─────
+app.use((req, res) => {
+  res.status(404).send('<h1>404 – Not Found</h1>');
+});
 
+// ───── CRITICAL: RAILWAY-COMPATIBLE PORT BINDING ─────
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Bot LIVE on port ${PORT}`));
+
+app.listen(PORT, '0.0.0.0', () => {
+  {
+  console.log(`EthHack AI Bot is LIVE on port ${PORT}`);
+  console.log(`→ Visit: https://bot.ethhack.com`);
+});
