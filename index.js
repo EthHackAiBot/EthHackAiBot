@@ -2,46 +2,36 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-// ───── Body parsing for forms / JSON (if you use it) ─────
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// ───── Serve static files (your HTML, CSS, images, etc.) ─────
-app.use(express.static(path.join(__dirname, 'public'))); 
-// ← make sure your index.html + assets are inside a folder called "public"
+// Serve static files (put your index.html, css, images in a folder called "public")
+app.use(express.static(path.join(__dirname, 'public')));
 
-// ───── Simple route for the root – serves your bot page ─────
+// Root route – serves the bot page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ───── Health check route (Railway loves this) ─────
+// Health check (Railway loves this)
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-// ───── YOUR EXISTING ROUTES BELOW THIS LINE ─────
-// Example placeholder routes – replace or add your real ones
-app.post('/add-wallet', (req, res) => {
-  // your wallet-adding logic here
-  res.json({ success: true, message: 'Wallet monitoring started' });
-});
+// YOUR EXISTING ROUTES GO HERE (add them below this line)
+// Example:
+// app.post('/add-wallet', ...)
+// app.get('/status', ...)
 
-app.get('/status', (req, res) => {
-  // your status check logic
-  res.json({ status: 'running', plan: 'lifetime' });
-});
-
-// ───── Catch-all for nice 404 (optional) ─────
+// 404 fallback
 app.use((req, res) => {
-  res.status(404).send('<h1>404 – Not Found</h1>');
+  res.status(404).send('<h1>404 – Not Found</h1>'));
 });
 
-// ───── CRITICAL: RAILWAY-COMPATIBLE PORT BINDING ─────
+// CRITICAL: Railway-compatible port binding
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, '0.0.0.0', () => {
-  {
   console.log(`EthHack AI Bot is LIVE on port ${PORT}`);
-  console.log(`→ Visit: https://bot.ethhack.com`);
+  console.log(`Visit: https://bot.ethhack.com`);
 });
