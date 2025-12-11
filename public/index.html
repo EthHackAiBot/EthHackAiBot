@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EthHack AI Bot – Lifetime Access</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0ff; text-align: center; padding: 40px; margin: 0; }
+    h1 { font-size: 2.8rem; margin-bottom: 10px; }
+    p { font-size: 1.3rem; max-width: 700px; margin: 20px auto; opacity: 0.9; }
+    .container { max-width: 800px; margin: 0 auto; }
+    input[type="text"] { width: 80%; max-width: 600px; padding: 16px; font-size: 1.2rem; border-radius: 12px; border: none; margin: 30px 0; }
+    button { background: #00ff9d; color: #000; padding: 16px 32px; font-size: 1.4rem; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,255,157,0.4); }
+    button:hover { background: #00cc7a; }
+    .success { color: #00ff9d; font-size: 1.5rem; margin: 30px 0; display: none; }
+    .telegram { margin-top: 40px; }
+    .telegram a { display: inline-block; background: #0088cc; color: white; padding: 16px 40px; font-size: 1.5rem; text-decoration: none; border-radius: 12px; margin-top: 20px; }
+    .telegram a:hover { background: #006699; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>EthHack AI Bot</h1>
+    <p id="welcome">Enter the wallet address(es) you want to protect (one per line)</p>
+
+    <div id="successMsg" class="success">
+      <strong>Payment confirmed! Lifetime access activated</strong><br><br>
+      Monitoring started for the wallet(s) below. You will receive instant Telegram alerts.
+    </div>
+
+    <textarea id="wallets" rows="6" placeholder="0x1234...&#10;0x5678..."></textarea><br/>
+
+    <button onclick="startMonitoring()">Start Monitoring</button>
+
+    <div class="telegram">
+      <p>Click below to connect your alerts to Telegram</p>
+      <a href="https://t.me/EthHackAlertBot" target="_blank">Connect me to Telegram alerts</a>
+    </div>
+
+    <p style="margin-top:60px; font-size:0.9rem; opacity:0.6;">
+      Lifetime access • No subscriptions • Real-time rug/honeypot/phishing protection
+    </p>
+  </div>
+
+  <script>
+    // If user came from Lemon Squeezy success page → auto-show success message
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('status') === 'success' || params.get('checkout') === 'completed') {
+      document.getElementById('welcome').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+      const email = params.get('email') || 'your email';
+      document.title = 'EthHack – Lifetime Access Activated';
+    }
+
+    function startMonitoring() {
+      const text = document.getElementById('wallets').value.trim();
+      if (!text) return alert('Please enter at least one wallet address');
+      alert('Monitoring started for lifetime!\n\n' + text.replace(/\n/g, '\n'));
+      // In the real version you would POST these wallets to your backend here
+    }
+  </script>
+</body>
+</html>
