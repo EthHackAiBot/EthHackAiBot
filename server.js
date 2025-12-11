@@ -9,7 +9,17 @@ const app = express();
 app.use(express.json());
 
 // Simple test commands
-bot.start((ctx) => ctx.reply('EthHack AI Bot is ALIVE! 🚀'));
+bot.start((ctx) => ctx.replyWithMarkdown(`
+*Welcome to EthHack AI Bot* 🚀
+
+Real-time EVM security alerts (rug-pulls, honeypots, phishing)
+
+Free tier → delayed alerts
+$19 lifetime → *instant alerts (<8s)*
+
+Type /live to see latest threats
+Type /upgrade for lifetime pro
+`));
 bot.command('live', (ctx) => ctx.reply('Scanning... no threats right now'));
 bot.command('upgrade', (ctx) => ctx.reply('Pro upgrade coming soon – $19 lifetime'));
 
