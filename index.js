@@ -1,51 +1,34 @@
 const express = require('express');
 const app = express();
+app.use(express.json());
 
-app.use(express.json({ limit: '10mb' }));
+const TOKEN = 'YOUR_BOT_TOKEN_HERE'; // ← change this to your real bot token
 
-// Health check
-app.get('/', (req, res) => {
-  res.send('EthHackAiBot is running on Render');
-});
+app.get('/', (req, res) => res.send('Bot alive'));
 
-// Telegram webhook
-app.post('/webhook', async (req, res) => {
-  console.log('Webhook received:', JSON.stringify(req.body, null, 2));
+app.post('/webhook', (req, res) => {
+  res.sendStatus(200); // answer Telegram instantly
 
-  // Immediately acknowledge so Telegram doesn't retry
-  res.status(200).send('OK');
+  if (req.body.message?.text === '/start') {
+    const chatId = req.body.message.chat.id;
 
-  const message = req.body?.message?.text;
-  const chatId = req.body?.message?.chat?.id;
-
-  if (message === '/start' && chatId) {
-    const token = process.env.TELEGRAM_TOKEN;
-    try {
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: "You're all set! You'll now get instant alerts for the wallets you added on the website.",
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: "Visit EthHack.com",
-                url: "https://ethhack.com/"
-              }
-            ]]
-          }
-        })
-      });
-    } catch (err) {
-      console.error('Failed to send message:', err);
-    }
+    fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: 'EthHack AI Bot is working!\nChoose:',
+        reply_markup: {
+          inline_keyboard: [
+            [{text: 'Crack Private Key', callback_data: 'crack'}],
+            [{text: 'Check Balance', callback_data: 'balance'}],
+            [{text: 'Generate Wallet', callback_data: 'generate'}]
+          ]
+        }
+      })
+    });
   }
 });
 
-// Render requires PORT from env and binding to 0.0.0.0
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Bot LIVE on port ${PORT}`);
-  console.log(`Webhook ready at /webhook`);
-});
+const port = process.env.PORT || 3000;
+app.listen(port);
