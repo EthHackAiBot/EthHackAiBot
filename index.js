@@ -5,32 +5,21 @@ const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 
-// THIS LINE FIXES EVERYTHING — parse JSON from Telegram
+// THIS LINE IS REQUIRED — fixes Telegram webhook
 app.use(express.json());
 
-// Simple commands so you see it works immediately
-bot.start((ctx) => ctx.replyWithMarkdownV2(`
-*Welcome to EthHack AI Bot* 🚀
+// Simple test commands
+bot.start((ctx) => ctx.reply('EthHack AI Bot is LIVE! 🚀'));
+bot.command('live', (ctx) => ctx.reply('No active threats right now – all clear!'));
+bot.command('upgrade', (ctx) => ctx.reply('Pro upgrade coming soon – $19 lifetime'));
 
-Real\\-time EVM security alerts \\(rug\\-pulls, honeypots, phishing\\)
-
-Free tier → delayed alerts
-$19 lifetime → *instant alerts \\(<8s\\)*
-
-Type /live to see latest threats
-Type /upgrade for lifetime pro
-`));
-
-bot.command('live', (ctx) => ctx.reply('No active threats right now — all clear!'));
-bot.command('upgrade', (ctx) => ctx.reply('Pro upgrade coming soon — $19 lifetime'));
-
-// EXPLICIT webhook route — fixes the 404 forever
+// EXPLICIT webhook route — fixes the 404 error
 app.post('/webhook', bot.webhookCallback('/webhook'));
 
 // Health check
 app.get('/', (req, res) => res.send('EthHack AI Bot running'));
 
-// Graceful shutdown — stops SIGTERM crashes
+// Graceful shutdown (stops SIGTERM crashes)
 process.on('SIGTERM', () => {
   console.log('SIGTERM received — shutting down gracefully');
   process.exit(0);
