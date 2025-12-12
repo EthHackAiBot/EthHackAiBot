@@ -3,23 +3,22 @@ const app = express();
 
 app.use(express.json());
 
-const TOKEN = process.env.BOT_TOKEN;
+const TOKEN = process.env.BOT_TOKEN || 'NO_TOKEN_SET';
 
-console.log('Bot started - Token:', TOKEN ? 'loaded' : 'MISSING!');
+console.log('Bot started - Token loaded:', TOKEN !== 'NO_TOKEN_SET' ? 'YES' : 'NO - CHECK RENDER ENV');
 
 app.get('/', (req, res) => {
   res.send('EthHackAiBot is alive and secure');
 });
 
-app.post('/webhook', (req, res) => {
-  console.log('Webhook received:', JSON.stringify(req.body));
+app.all('/webhook', (req, res) => {
+  console.log('WEBHOOK HIT:', req.method, JSON.stringify(req.body));
 
-  res.sendStatus(200); // Instant OK to Telegram
+  res.sendStatus(200);  // Always reply 200 instantly to Telegram
 
-  const message = req.body.message;
-  if (message && message.text === '/start') {
-    const chatId = message.chat.id;
-    console.log('/start from:', chatId);
+  if (req.body.message && req.body.message.text === '/start') {
+    const chatId = req.body.message.chat.id;
+    console.log('Processing /start from chat ID:', chatId);
 
     fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
       method: 'POST',
@@ -37,12 +36,13 @@ app.post('/webhook', (req, res) => {
         }
       })
     })
-    .then(r => r.json())
-    .then(data => console.log('Message sent:', data))
-    .catch(err => console.log('Send error:', err));
+    .then(response => response.json())
+    .then(data => console.log('Telegram API response:', data))
+    .catch(err => console.error('Error sending message:', err));
   }
 });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log('Bot listening');
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Bot listening on port ${port}`);
 });
