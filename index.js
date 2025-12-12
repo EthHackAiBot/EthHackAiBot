@@ -1,48 +1,33 @@
 const express = require('express');
+const fetch = require('node-fetch');
 const app = express();
 
 app.use(express.json());
+app.use(express.static('public')); // this serves the HTML/CSS/JS
 
-const TOKEN = process.env.BOT_TOKEN || 'NO_TOKEN_SET';
-
-console.log('Bot started - Token loaded:', TOKEN !== 'NO_TOKEN_SET' ? 'YES' : 'NO - CHECK RENDER ENV');
-
+// Root = beautiful web UI
 app.get('/', (req, res) => {
-  res.send('EthHackAiBot is alive and secure');
+  res.sendFile(__dirname + '/public/index.html');
 });
 
-app.all('/webhook', (req, res) => {
-  console.log('WEBHOOK HIT:', req.method, JSON.stringify(req.body));
-
-  res.sendStatus(200);  // Always reply 200 instantly to Telegram
-
-  if (req.body.message && req.body.message.text === '/start') {
-    const chatId = req.body.message.chat.id;
-    console.log('Processing /start from chat ID:', chatId);
-
-    fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: 'EthHack AI Bot 🐺\n\nWelcome! I\'m online and ready.\nChoose an option below:',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Crack Private Key', callback_data: 'crack' }],
-            [{ text: 'Check Balance', callback_data: 'balance' }],
-            [{ text: 'Generate Wallet', callback_data: 'generate' }],
-            [{ text: 'Help / Tutorial', callback_data: 'help' }]
-          ]
-        }
-      })
-    })
-    .then(response => response.json())
-    .then(data => console.log('Telegram API response:', data))
-    .catch(err => console.error('Error sending message:', err));
+// API endpoint to check balance (called from the website)
+app.get('/api/balance/:address', async (req, res) => {
+  try {
+    const address = req.params.address;
+    const response = await fetch(
+      `https://api.ethplorer.io/getAddressInfo/${address}?apiKey=freekey`
+    );
+    const data = await response.json();
+    if (data.error) throw data.error;
+    res.json({
+      address,
+      balance: data.ETH.balance,
+      usd: (data.ETH.price ? data.ETH.price.rate : 0).toFixed(2)
+    });
+  } catch (e) {
+    res.status(400).json({ error: 'Invalid address or network error' });
   }
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Bot listening on port ${port}`);
-});
+app.listen(port, () => console.log('Web UI + API running on port', port));
