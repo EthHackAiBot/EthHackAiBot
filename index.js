@@ -1,35 +1,34 @@
 require('dotenv').config();
 const express = require('express');
-const { Telegraf } = require('telegraf');
-
 const app = express();
+
 app.use(express.json());
 
-// Your bot token (make sure it's in Railway Variables as TELEGRAM_TOKEN)
-const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
+// Health endpoint (Railway needs this to keep container alive)
+app.get('/', (req, res) => res.send('EthHackAiBot is alive'));
 
-// Basic /start command — this will reply instantly
-bot.start((ctx) => {
-  ctx.reply("You're all set! You'll now get instant alerts for the wallets you added on the website.");
-});
-
-// Optional: reply to any message (for testing)
-bot.on('text', (ctx) => {
-  ctx.reply('Bot is alive! Use /start to activate alerts.');
-});
-
-// Webhook endpoint — Telegram will POST here
+// Webhook endpoint – super simple, no Telegraf yet
 app.post('/webhook', (req, res) => {
-  bot.handleUpdate(req.body, res);
+  console.log('Webhook hit! Raw body:', JSON.stringify(req.body, null, 2));
+  
+  // Always reply 200 instantly so Telegram doesn't retry
   res.status(200).send('OK');
+  
+  // Simple /start detection (we'll add real logic later)
+  const message = req.body?.message?.text;
+  const chatId = req.body?.message?.chat?.id;
+  
+  if (message === '/start' && chatId) {
+    const reply = "You're all set! You'll now get instant alerts for the wallets you added on the website.";
+    fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: reply })
+    }).catch(err => console.log('Send error:', err));
+  }
 });
 
-// Health check (optional but nice)
-app.get('/', (req, res) => {
-  res.send('EthHackAiBot is running!');
-});
-
-// ←←← THIS IS THE CRITICAL PART FOR RAILWAY ←←←
+// CRITICAL RAILWAY FIX – use their port and bind to 0.0.0.0
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Bot LIVE on port ${PORT}`);
