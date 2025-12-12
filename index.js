@@ -26,7 +26,15 @@ app.post('/webhook', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
-          text: "You're all set! You'll now get instant alerts for the wallets you added on the website."
+          text: "You're all set! You'll now get instant alerts for the wallets you added on the website.",
+          reply_markup: {
+            inline_keyboard: [[
+              {
+                text: "Visit EthHack.com",
+                url: "https://ethhack.com/"
+              }
+            ]]
+          }
         })
       });
     } catch (err) {
