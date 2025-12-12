@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-const TOKEN = 'YOUR_BOT_TOKEN_HERE'; // ← change this to your real bot token
+const TOKEN = '8469583421:AAGZCL6zSmzssPFCivy7FEzb-G_GptJjs0A'; // ← change this to your real bot token
 
 app.get('/', (req, res) => res.send('Bot alive'));
 
