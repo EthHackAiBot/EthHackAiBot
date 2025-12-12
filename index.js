@@ -3,10 +3,10 @@ const app = express();
 
 app.use(express.json());
 
-// Serve your beautiful site
+// Serve your landing page
 app.use(express.static('public'));
 
-// Telegram webhook – replies to /start with welcome + button to site
+// Telegram webhook – full handler for /start
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200); // Instant OK
 
@@ -19,7 +19,7 @@ app.post('/webhook', async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text: 'EthHack AI Bot 🐺\n\nLifetime access ready!\nAdd your wallets on the site for real-time protection:',
+        text: 'EthHack AI Bot 🐺\n\nYour lifetime protection is ready!\nAdd wallets here:',
         reply_markup: {
           inline_keyboard: [[{ text: 'Open Site', url: 'https://bot.ethhack.com' }]]
         }
@@ -28,7 +28,7 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Optional: Make /webhook show "OK" for checks
+// Health check for Telegram
 app.get('/webhook', (req, res) => res.send('OK'));
 
-app.listen(process.env.PORT || 3000);
+app.listen(process.env.PORT || 3000, () => console.log('Running'));
