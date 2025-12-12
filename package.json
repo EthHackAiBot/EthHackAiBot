@@ -1,14 +1,11 @@
 {
   "name": "ethhackaibot",
   "version": "1.0.0",
-  "description": "EthHack Telegram alerts bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
-  },
-  "author": "",
-  "license": "MIT"
+    "express": "^4.18.2"
+  }
 }
