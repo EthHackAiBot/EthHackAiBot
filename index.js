@@ -2,31 +2,36 @@ require('dotenv').config();
 const express = require('express');
 const { Telegraf } = require('telegraf');
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
-
-// THIS LINE IS REQUIRED — fixes Telegram webhook
 app.use(express.json());
 
-// Simple test commands
-bot.start((ctx) => ctx.reply('EthHack AI Bot is LIVE! 🚀'));
-bot.command('live', (ctx) => ctx.reply('No active threats right now – all clear!'));
-bot.command('upgrade', (ctx) => ctx.reply('Pro upgrade coming soon – $19 lifetime'));
+// Your bot token (make sure it's in Railway Variables as TELEGRAM_TOKEN)
+const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
-// EXPLICIT webhook route — fixes the 404 error
-app.post('/webhook', bot.webhookCallback('/webhook'));
-
-// Health check
-app.get('/', (req, res) => res.send('EthHack AI Bot running'));
-
-// Graceful shutdown (stops SIGTERM crashes)
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received — shutting down gracefully');
-  process.exit(0);
+// Basic /start command — this will reply instantly
+bot.start((ctx) => {
+  ctx.reply("You're all set! You'll now get instant alerts for the wallets you added on the website.");
 });
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+// Optional: reply to any message (for testing)
+bot.on('text', (ctx) => {
+  ctx.reply('Bot is alive! Use /start to activate alerts.');
+});
+
+// Webhook endpoint — Telegram will POST here
+app.post('/webhook', (req, res) => {
+  bot.handleUpdate(req.body, res);
+  res.status(200).send('OK');
+});
+
+// Health check (optional but nice)
+app.get('/', (req, res) => {
+  res.send('EthHackAiBot is running!');
+});
+
+// ←←← THIS IS THE CRITICAL PART FOR RAILWAY ←←←
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Bot LIVE on port ${PORT}`);
-  console.log('Webhook ready at /webhook');
+  console.log(`Webhook ready at /webhook`);
 });
