@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 app.post('/create-checkout-session', async (req, res) => {
   const { wallets } = req.body;
 
-  console.log('Received request to create session with wallets:', wallets); // Log for debugging
+  console.log('Received request to create session with wallets:', wallets); // Log input
 
   if (!wallets || wallets.length === 0) {
     console.log('Error: No wallets provided');
