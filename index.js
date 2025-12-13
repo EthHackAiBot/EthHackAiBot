@@ -19,7 +19,10 @@ app.get('/', (req, res) => {
 app.post('/create-checkout-session', async (req, res) => {
   const { wallets } = req.body;
 
+  console.log('Received request to create session with wallets:', wallets); // Log for debugging
+
   if (!wallets || wallets.length === 0) {
+    console.log('Error: No wallets provided');
     return res.status(400).json({ error: 'No wallets provided' });
   }
 
@@ -38,8 +41,11 @@ app.post('/create-checkout-session', async (req, res) => {
       metadata: { wallets: wallets.join(',') } // Save wallets in metadata for later
     });
 
+    console.log('Session created:', session.id); // Log success
+
     res.json({ id: session.id });
   } catch (err) {
+    console.log('Error creating session:', err.message); // Log error
     res.status(500).json({ error: err.message });
   }
 });
