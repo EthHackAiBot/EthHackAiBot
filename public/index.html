@@ -42,21 +42,35 @@
     </p>
   </div>
 
+  <script src="https://js.stripe.com/v3/"></script>
   <script>
-    // If user came from Lemon Squeezy success page → auto-show success message
+    // If user came from Stripe success page → auto-show success message
     const params = new URLSearchParams(window.location.search);
-    if (params.get('status') === 'success' || params.get('checkout') === 'completed') {
+    if (params.get('status') === 'success') {
       document.getElementById('welcome').style.display = 'none';
       document.getElementById('successMsg').style.display = 'block';
-      const email = params.get('email') || 'your email';
       document.title = 'EthHack – Lifetime Access Activated';
     }
 
-    function startMonitoring() {
+    async function startMonitoring() {
       const text = document.getElementById('wallets').value.trim();
       if (!text) return alert('Please enter at least one wallet address');
-      alert('Monitoring started for lifetime!\n\n' + text.replace(/\n/g, '\n'));
-      // In the real version you would POST these wallets to your backend here
+
+      const wallets = text.split('\n').filter(w => w.trim());
+
+      const stripe = Stripe('pk_live_51Sdv0cB4q90VhcD0njTotzmO'); // Replace with your Live publishable key (starts with pk_live_...)
+
+      try {
+        const response = await fetch('/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wallets })
+        });
+        const { id } = await response.json();
+        stripe.redirectToCheckout({ sessionId: id });
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
     }
   </script>
 </body>
