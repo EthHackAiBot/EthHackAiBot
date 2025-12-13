@@ -1,14 +1,16 @@
 const express = require('express');
+const stripe = require('stripe');
 const app = express();
 
 app.use(express.json());
-
-// Serve your landing page
 app.use(express.static('public'));
 
-// Telegram webhook – sends welcome on /start
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const stripeClient = stripe(STRIPE_SECRET_KEY);
+
+// Telegram webhook (keep if needed)
 app.post('/webhook', async (req, res) => {
-  res.sendStatus(200); // Instant OK
+  res.sendStatus(200);
 
   if (req.body.message?.text === '/start') {
     const chatId = req.body.message.chat.id;
@@ -28,6 +30,36 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// New endpoint for creating Stripe Checkout session
+app.post('/create-checkout-session', async (req, res) => {
+  const { wallets } = req.body; // Wallets from the textarea
+
+  if (!wallets || wallets.length === 0) {
+    return res.status(400).json({ error: 'No wallets provided' });
+  }
+
+  try {
+    const session = await stripeClient.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: 'price_1Sdv0cB4q90VhcD0njTotzmO', // Your Price ID
+          quantity: 1,
+        },
+      },
+      mode: 'payment', // One-time
+      success_url: `https://bot.ethhack.com?status=success`,
+      cancel_url: `https://bot.ethhack.com?status=cancel`,
+      metadata: { wallets: wallets.join(',') } // Save wallets in metadata for later
+    });
+
+    res.json({ id: session.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/webhook', (req, res) => res.send('OK'));
 
-app.listen(process.env.PORT || 3000);
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log('Server running'));
