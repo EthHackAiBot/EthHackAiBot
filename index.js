@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
 
 // New endpoint for creating Stripe Checkout session
 app.post('/create-checkout-session', async (req, res) => {
-  const { wallets } = req.body; // Wallets from the textarea
+  const { wallets } = req.body;
 
   if (!wallets || wallets.length === 0) {
     return res.status(400).json({ error: 'No wallets provided' });
