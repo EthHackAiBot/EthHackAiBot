@@ -15,15 +15,18 @@
       padding: 20px;
     }
     .logo-img {
-      max-width: 200px;          /* 50% of the original 400px size */
-      width: 45%;                /* Responsive, but smaller */
+      max-width: 200px;          /* Your requested 50% size */
+      width: 45%;
       margin: 40px auto 30px;
       display: block;
       border-radius: 20px;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);  /* Keeps the cool cyan glow */
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);  /* Cool cyan glow */
     }
     h1, h2 {
-      color: #0f0;
+      color: #0ff;               /* Bright cyan glow like on ethhack.com */
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+      font-size: 32px;
+      margin: 20px 0;
     }
     textarea {
       width: 90%;
@@ -38,18 +41,25 @@
       display: block;
     }
     button {
-      background: linear-gradient(to bottom, #0f0, #0c0);
+      background: linear-gradient(to bottom, #00ffff, #00bfff); /* Cyan to blue gradient matching ethhack.com button */
       color: #000;
       font-weight: bold;
-      padding: 15px 40px;
-      font-size: 20px;
+      padding: 18px 50px;
+      font-size: 24px;
       border: none;
-      border-radius: 8px;
+      border-radius: 50px;       /* Pill-shaped like the main site */
       cursor: pointer;
-      margin: 20px;
+      margin: 40px 0;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5); /* Glowing effect */
+      transition: all 0.3s;
+    }
+    button:hover {
+      background: linear-gradient(to bottom, #00bfff, #0099cc);
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+      transform: scale(1.05);
     }
     .connect-btn {
-      background: linear-gradient(to bottom, #1e90ff, #0074d9);
+      background: linear-gradient(to bottom, #00ffff, #00bfff); /* Same gradient for consistency */
       margin-top: 50px;
     }
     .features {
@@ -62,10 +72,10 @@
 </head>
 <body>
 
-  <!-- Logo - now 50% smaller with the same glow -->
+  <!-- Logo (50% size with glow) -->
   <img src="/logo.jpg" alt="EthHack Ai Bot Logo" class="logo-img">
 
-  <h2>Lifetime Ethereum Wallet Protection</h2>
+  <h2>Over 50+ EVM's covered</h2>
 
   <p>Enter the wallet address(es) you want to protect (one per line)</p>
   <textarea id="wallets" placeholder="0xabc123...&#10;0xdef456..."></textarea>
