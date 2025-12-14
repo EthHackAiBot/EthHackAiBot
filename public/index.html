@@ -15,9 +15,9 @@
       padding: 20px;
     }
     .logo-img {
-      max-width: 400px;
+      max-width: 500px;
       width: 90%;
-      margin: 20px auto;
+      margin: 30px auto;
       display: block;
     }
     h2 {
@@ -63,9 +63,8 @@
   </style>
 </head>
 <body>
-  <!-- Added the uploaded logo image -->
-  <img src="https://files.catbox.moe/your-uploaded-file-name.jpg" alt="EthHack Ai Bot Logo" class="logo-img">
-  <!-- If the direct link doesn't work or for better reliability, upload the image to your /public folder as logo.png and use src="/logo.png" -->
+  <!-- Your logo (logo.jpg placed in /public folder) -->
+  <img src="/logo.jpg" alt="EthHack Ai Bot Logo" class="logo-img">
 
   <h2>Lifetime Ethereum Wallet Protection</h2>
 
@@ -96,7 +95,6 @@
         return;
       }
 
-      // Disable button during request
       checkoutButton.disabled = true;
       checkoutButton.textContent = 'Processing...';
 
@@ -112,10 +110,8 @@
         const session = await response.json();
 
         if (session.id) {
-          // Client-side redirect using session ID (original method)
           stripe.redirectToCheckout({ sessionId: session.id });
         } else if (session.url) {
-          // Fallback for server-side URL return
           window.location.href = session.url;
         } else {
           alert('Error: ' + (session.error || 'Could not create checkout'));
@@ -129,9 +125,8 @@
       }
     });
 
-    // Connect button
     document.querySelector('.connect-btn').addEventListener('click', () => {
-      window.location.href = 'https://t.me/EthHackAIBot'; // Update with your bot username
+      window.location.href = 'https://t.me/EthHackAIBot'; // Update with your exact bot link
     });
   </script>
 </body>
