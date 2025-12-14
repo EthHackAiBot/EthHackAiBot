@@ -1,4 +1,4 @@
-// index.js - Full updated code for EthHackAiBot backend
+// index.js - Full final code for EthHackAiBot (simple, working, real USD via Stripe)
 const express = require('express');
 const stripe = require('stripe');
 
@@ -12,21 +12,21 @@ const stripeClient = stripe(STRIPE_SECRET_KEY);
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
-// Configurable via Render environment variables
+// Optional config (you can set in Render Environment)
 const SUCCESS_URL = process.env.SUCCESS_URL || 'https://bot.ethhack.com?status=success';
 const CANCEL_URL = process.env.CANCEL_URL || 'https://bot.ethhack.com?status=cancel';
-const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO'; // Your Stripe Price ID
+const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO'; // Your $19 one-time price ID
 
-// Serve landing page
+// Serve the main site
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Create Checkout Session - Fixed with idempotency and expiry
+// Create Stripe Checkout session
 app.post('/create-checkout-session', async (req, res) => {
   const { wallets, user_id } = req.body;
 
-  console.log('Create session request - wallets:', wallets, 'user_id:', user_id);
+  console.log('Payment request - wallets:', wallets, 'user_id:', user_id);
 
   if (!wallets || !Array.isArray(wallets) || wallets.length === 0) {
     return res.status(400).json({ error: 'No wallets provided' });
@@ -59,18 +59,17 @@ app.post('/create-checkout-session', async (req, res) => {
       idempotency_key: idempotencyKey
     });
 
-    console.log('Checkout session created:', session.id);
-
+    console.log('Session created:', session.id);
     res.json({ url: session.url });
   } catch (err) {
-    console.error('Error creating checkout session:', err.message);
+    console.error('Stripe error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Telegram webhook - Updated to respond to ANY message (including first open)
+// Telegram webhook - responds to ANY message (including first open)
 app.post('/webhook', async (req, res) => {
-  res.sendStatus(200); // Respond immediately
+  res.sendStatus(200);
 
   const update = req.body;
 
@@ -85,7 +84,7 @@ app.post('/webhook', async (req, res) => {
           chat_id: chatId,
           text: 'Welcome to EthHack AI Bot! 🛡️\n\n'
               + "Don't get Rekt — Get EthHack!\n\n"
-              + 'Get lifetime protection for $19 one-time payment.\n'
+              + 'Lifetime protection for $19 one-time payment.\n'
               + 'Real-time alerts for rug pulls, honeypots, and phishing across 50+ EVM chains.',
           reply_markup: {
             inline_keyboard: [[
@@ -95,12 +94,12 @@ app.post('/webhook', async (req, res) => {
         })
       });
     } catch (err) {
-      console.error('Failed to send welcome message:', err);
+      console.error('Failed to send message:', err);
     }
   }
 });
 
-// Health check for Telegram
+// Health check
 app.get('/webhook', (req, res) => res.send('OK'));
 
 const port = process.env.PORT || 3000;
