@@ -15,12 +15,12 @@
       padding: 20px;
     }
     .logo-img {
-      max-width: 400px;
-      width: 90%;
-      margin: 40px auto 20px;
+      max-width: 200px;          /* 50% of the original 400px size */
+      width: 45%;                /* Responsive, but smaller */
+      margin: 40px auto 30px;
       display: block;
       border-radius: 20px;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);  /* Keeps the cool cyan glow */
     }
     h1, h2 {
       color: #0f0;
@@ -62,7 +62,7 @@
 </head>
 <body>
 
-  <!-- The logo goes HERE, inside the <body>, NOT in <style>! -->
+  <!-- Logo - now 50% smaller with the same glow -->
   <img src="/logo.jpg" alt="EthHack Ai Bot Logo" class="logo-img">
 
   <h2>Lifetime Ethereum Wallet Protection</h2>
@@ -81,8 +81,7 @@
   <button class="connect-btn">Connect me to Telegram alerts</button>
 
   <script>
-    // Your Stripe and button code stays the same
-    const stripe = Stripe('pk_live_XXXXXXXXXXXXXXXXXXXXXXXX'); // Replace with your key
+    const stripe = Stripe('pk_live_XXXXXXXXXXXXXXXXXXXXXXXX'); // Replace with your actual publishable key
 
     const checkoutButton = document.getElementById('checkout-button');
 
@@ -124,7 +123,7 @@
     });
 
     document.querySelector('.connect-btn').addEventListener('click', () => {
-      window.location.href = 'https://t.me/EthHackAIBot';
+      window.location.href = 'https://t.me/EthHackAIBot'; // Update with your exact bot username
     });
   </script>
 </body>
