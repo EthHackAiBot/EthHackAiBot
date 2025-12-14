@@ -15,15 +15,22 @@
       padding: 20px;
     }
     .logo-img {
-      max-width: 300px;          /* Increased from 200px → about 50% wider / 1.5x larger overall */
-      width: 70%;                /* A bit wider on screen for better presence */
-      margin: 40px auto 30px;
+      max-width: 300px;
+      width: 70%;
+      margin: 40px auto 20px;
       display: block;
       border-radius: 20px;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);  /* Keeps the beautiful cyan glow */
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+    }
+    .slogan {
+      font-size: 32px;
+      color: #0ff;
+      text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+      margin: 10px 0 40px;
+      font-weight: bold;
     }
     h1, h2 {
-      color: #0ff;               /* Bright cyan glow like on ethhack.com */
+      color: #0ff;
       text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
       font-size: 32px;
       margin: 20px 0;
@@ -72,8 +79,11 @@
 </head>
 <body>
 
-  <!-- Logo - now wider and ~1.5x larger (from previous 200px to 300px max-width) -->
+  <!-- Logo -->
   <img src="/logo.jpg" alt="EthHack Ai Bot Logo" class="logo-img">
+
+  <!-- New slogan right under the logo -->
+  <div class="slogan">Don't get Rekt - Get EthHack!</div>
 
   <h2>Over 50+ EVM's covered</h2>
 
@@ -137,4 +147,4 @@
     });
   </script>
 </body>
-</html>    
+</html>
