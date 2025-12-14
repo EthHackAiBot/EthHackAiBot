@@ -9,19 +9,20 @@
     body {
       background-color: #000;
       color: #fff;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       text-align: center;
       margin: 0;
       padding: 20px;
     }
     .logo-img {
-      max-width: 500px;
+      max-width: 400px;
       width: 90%;
-      margin: 30px auto;
+      margin: 40px auto 20px;
       display: block;
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
     }
-    h2 {
-      font-size: 24px;
+    h1, h2 {
       color: #0f0;
     }
     textarea {
@@ -47,9 +48,6 @@
       cursor: pointer;
       margin: 20px;
     }
-    button:hover {
-      background: linear-gradient(to bottom, #0c0, #090);
-    }
     .connect-btn {
       background: linear-gradient(to bottom, #1e90ff, #0074d9);
       margin-top: 50px;
@@ -63,7 +61,8 @@
   </style>
 </head>
 <body>
-  <!-- Your logo (logo.jpg placed in /public folder) -->
+
+  <!-- The logo goes HERE, inside the <body>, NOT in <style>! -->
   <img src="/logo.jpg" alt="EthHack Ai Bot Logo" class="logo-img">
 
   <h2>Lifetime Ethereum Wallet Protection</h2>
@@ -82,7 +81,8 @@
   <button class="connect-btn">Connect me to Telegram alerts</button>
 
   <script>
-    const stripe = Stripe('pk_live_XXXXXXXXXXXXXXXXXXXXXXXX'); // Replace with your actual publishable key if needed
+    // Your Stripe and button code stays the same
+    const stripe = Stripe('pk_live_XXXXXXXXXXXXXXXXXXXXXXXX'); // Replace with your key
 
     const checkoutButton = document.getElementById('checkout-button');
 
@@ -101,10 +101,8 @@
       try {
         const response = await fetch('/create-checkout-session', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ wallets }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wallets })
         });
 
         const session = await response.json();
@@ -126,7 +124,7 @@
     });
 
     document.querySelector('.connect-btn').addEventListener('click', () => {
-      window.location.href = 'https://t.me/EthHackAIBot'; // Update with your exact bot link
+      window.location.href = 'https://t.me/EthHackAIBot';
     });
   </script>
 </body>
