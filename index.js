@@ -1,7 +1,6 @@
-// index.js - Updated code (renamed from server.js, same file you already have)
+// index.js - Fixed version using native Node.js fetch (no node-fetch needed)
 const express = require('express');
 const stripe = require('stripe');
-const fetch = require('node-fetch'); // Required for Telegram API calls (install if missing: npm i node-fetch)
 
 const app = express();
 
@@ -13,19 +12,19 @@ const stripeClient = stripe(STRIPE_SECRET_KEY);
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
-// Configurable via Render environment variables (recommended)
+// Configurable via Render environment variables
 const SUCCESS_URL = process.env.SUCCESS_URL || 'https://bot.ethhack.com?status=success';
 const CANCEL_URL = process.env.CANCEL_URL || 'https://bot.ethhack.com?status=cancel';
-const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO'; // Move your price here!
+const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO'; // Set this in Render env!
 
 // Serve your landing page
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Create Checkout Session - Fixed version
+// Create Checkout Session
 app.post('/create-checkout-session', async (req, res) => {
-  const { wallets, user_id } = req.body; // user_id = Telegram user ID (sent from frontend)
+  const { wallets, user_id } = req.body;
 
   console.log('Create session request - wallets:', wallets, 'user_id:', user_id);
 
@@ -38,7 +37,6 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 
   try {
-    // Unique idempotency key to prevent duplicate sessions (double-clicks, retries, etc.)
     const idempotencyKey = `checkout_${user_id}_${Date.now()}`;
 
     const session = await stripeClient.checkout.sessions.create({
@@ -49,22 +47,20 @@ app.post('/create-checkout-session', async (req, res) => {
           quantity: 1,
         },
       ],
-      mode: 'payment', // One-time payment - change to 'subscription' if you switch later
+      mode: 'payment',
       success_url: SUCCESS_URL,
       cancel_url: CANCEL_URL,
       metadata: {
         wallets: wallets.join(','),
         telegram_user_id: String(user_id),
       },
-      // Session expires in 30 minutes → fixes "Something went wrong" on old/stale links
       expires_at: Math.floor(Date.now() / 1000) + 1800, // 30 minutes
     }, {
-      idempotency_key: idempotencyKey // This stops repeated session creation
+      idempotency_key: idempotencyKey
     });
 
-    console.log('Checkout session created successfully:', session.id);
+    console.log('Checkout session created:', session.id);
 
-    // Return the direct Stripe URL - frontend should redirect immediately
     res.json({ url: session.url });
   } catch (err) {
     console.error('Error creating checkout session:', err.message);
@@ -74,7 +70,7 @@ app.post('/create-checkout-session', async (req, res) => {
 
 // Telegram webhook endpoint
 app.post('/webhook', async (req, res) => {
-  res.sendStatus(200); // Respond immediately to Telegram
+  res.sendStatus(200);
 
   const update = req.body;
 
@@ -82,6 +78,7 @@ app.post('/webhook', async (req, res) => {
     const chatId = update.message.chat.id;
 
     try {
+      // Native fetch - no import needed in Node.js 18+
       await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -101,7 +98,7 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Health check (Telegram pings this)
+// Health check
 app.get('/webhook', (req, res) => res.send('OK'));
 
 const port = process.env.PORT || 3000;
