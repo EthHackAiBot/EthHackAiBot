@@ -1,4 +1,4 @@
-// index.js - Fixed version using native Node.js fetch (no node-fetch needed)
+// index.js - Full updated code for EthHackAiBot backend
 const express = require('express');
 const stripe = require('stripe');
 
@@ -15,14 +15,14 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 // Configurable via Render environment variables
 const SUCCESS_URL = process.env.SUCCESS_URL || 'https://bot.ethhack.com?status=success';
 const CANCEL_URL = process.env.CANCEL_URL || 'https://bot.ethhack.com?status=cancel';
-const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO'; // Set this in Render env!
+const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO'; // Your Stripe Price ID
 
-// Serve your landing page
+// Serve landing page
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Create Checkout Session
+// Create Checkout Session - Fixed with idempotency and expiry
 app.post('/create-checkout-session', async (req, res) => {
   const { wallets, user_id } = req.body;
 
@@ -68,37 +68,39 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// Telegram webhook endpoint
+// Telegram webhook - Updated to respond to ANY message (including first open)
 app.post('/webhook', async (req, res) => {
-  res.sendStatus(200);
+  res.sendStatus(200); // Respond immediately
 
   const update = req.body;
 
-  if (update.message && update.message.text === '/start') {
+  if (update.message) {
     const chatId = update.message.chat.id;
 
     try {
-      // Native fetch - no import needed in Node.js 18+
       await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
-          text: 'EthHack AI Bot 🐺\n\nLifetime protection activated!\nAdd your wallets on the site for real-time alerts:',
+          text: 'Welcome to EthHack AI Bot! 🛡️\n\n'
+              + "Don't get Rekt — Get EthHack!\n\n"
+              + 'Get lifetime protection for $19 one-time payment.\n'
+              + 'Real-time alerts for rug pulls, honeypots, and phishing across 50+ EVM chains.',
           reply_markup: {
             inline_keyboard: [[
-              { text: 'Open Site', url: 'https://bot.ethhack.com' }
+              { text: 'Upgrade to Lifetime Pro 💳', web_app: { url: 'https://bot.ethhack.com' } }
             ]]
           }
         })
       });
     } catch (err) {
-      console.error('Failed to send Telegram message:', err);
+      console.error('Failed to send welcome message:', err);
     }
   }
 });
 
-// Health check
+// Health check for Telegram
 app.get('/webhook', (req, res) => res.send('OK'));
 
 const port = process.env.PORT || 3000;
