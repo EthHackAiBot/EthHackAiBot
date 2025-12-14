@@ -1,46 +1,29 @@
-<script src="https://js.stripe.com/v3/"></script>
-<script>
-// No need for publishable key anymore if using direct URL redirect!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthHack AI Bot</title>
+  <style>
+    body { background: #000; color: #fff; font-family: Arial; text-align: center; }
+    textarea { width: 80%; height: 100px; }
+    button { padding: 10px 20px; background: #0f0; border: none; color: #000; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>EthHack AI Bot 🐺</h1>
+  <p>Enter the wallet address(es) you want to protect (one per line)</p>
+  <textarea placeholder="e.g. 0xabc..."></textarea><br><br>
+  <button id="start-monitoring">Start Monitoring</button>
+  <hr>
+  <p>Lifetime access • No subscriptions • Real-time protection</p>
 
-document.querySelector('#start-monitoring-btn').addEventListener('click', async () => {
-  // Collect wallets from textarea (one per line)
-  const textarea = document.querySelector('textarea'); // adjust selector if needed
-  const walletLines = textarea.value.trim().split('\n');
-  const wallets = walletLines.map(line => line.trim()).filter(line => line.length > 0);
-
-  if (wallets.length === 0) {
-    alert('Please enter at least one wallet address');
-    return;
-  }
-
-  // Get Telegram user_id - you MUST have this from Telegram WebApp or login
-  // Example if using Telegram Mini App / WebApp:
-  const user_id = Telegram.WebApp.initDataUnsafe.user?.id;
-
-  // If not using Telegram WebApp, you need another way to get user_id (e.g., prompt or query param)
-  if (!user_id) {
-    alert('Unable to get your Telegram user ID. Open this site from the bot.');
-    return;
-  }
-
-  try {
-    const response = await fetch('/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wallets, user_id })
+  <script>
+    // Your payment JS here (the updated version without redirectToCheckout)
+    document.getElementById('start-monitoring').addEventListener('click', async () => {
+      alert('Payment flow ready! Add your full JS here.');
+      // Paste the fetch('/create-checkout-session') code from earlier
     });
-
-    const data = await response.json();
-
-    if (data.url) {
-      // NEW: Direct redirect to Stripe Checkout URL
-      window.location.href = data.url;
-    } else {
-      alert('Error: ' + (data.error || 'Failed to create payment'));
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Network error - check connection or try again');
-  }
-});
-</script>
+  </script>
+</body>
+</html>
