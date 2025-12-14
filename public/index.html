@@ -4,25 +4,126 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EthHack AI Bot</title>
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
-    body { background: #000; color: #fff; font-family: Arial; text-align: center; }
-    textarea { width: 80%; height: 100px; }
-    button { padding: 10px 20px; background: #0f0; border: none; color: #000; font-size: 18px; }
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: 24px;
+      color: #0f0;
+    }
+    textarea {
+      width: 90%;
+      max-width: 600px;
+      height: 150px;
+      background: #111;
+      color: #fff;
+      border: 1px solid #333;
+      padding: 10px;
+      font-size: 16px;
+      margin: 20px auto;
+      display: block;
+    }
+    button {
+      background: linear-gradient(to bottom, #0f0, #0c0);
+      color: #000;
+      font-weight: bold;
+      padding: 15px 40px;
+      font-size: 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 20px;
+    }
+    button:hover {
+      background: linear-gradient(to bottom, #0c0, #090);
+    }
+    .connect-btn {
+      background: linear-gradient(to bottom, #1e90ff, #0074d9);
+      margin-top: 50px;
+    }
+    .features {
+      font-size: 18px;
+      margin: 40px auto;
+      max-width: 800px;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
-  <h1>EthHack AI Bot 🐺</h1>
+  <h1>EthHack AI 🐺</h1>
+  <h2>Lifetime Ethereum Wallet Protection</h2>
+
   <p>Enter the wallet address(es) you want to protect (one per line)</p>
-  <textarea placeholder="e.g. 0xabc..."></textarea><br><br>
-  <button id="start-monitoring">Start Monitoring</button>
-  <hr>
-  <p>Lifetime access • No subscriptions • Real-time protection</p>
+  <textarea id="wallets" placeholder="0xabc123...&#10;0xdef456..."></textarea>
+
+  <button id="checkout-button">Start Monitoring</button>
+
+  <div class="features">
+    <p><strong>Lifetime access • No subscriptions • Real-time rug/honeypot/phishing protection</strong></p>
+    <p>Get instant Telegram alerts for suspicious activity on your wallets.</p>
+  </div>
+
+  <h2>Click below to connect your alerts to Telegram</h2>
+  <button class="connect-btn">Connect me to Telegram alerts</button>
 
   <script>
-    // Your payment JS here (the updated version without redirectToCheckout)
-    document.getElementById('start-monitoring').addEventListener('click', async () => {
-      alert('Payment flow ready! Add your full JS here.');
-      // Paste the fetch('/create-checkout-session') code from earlier
+    const stripe = Stripe('pk_live_XXXXXXXXXXXXXXXXXXXXXXXX'); // Replace with your actual publishable key if needed
+
+    const checkoutButton = document.getElementById('checkout-button');
+
+    checkoutButton.addEventListener('click', async () => {
+      const textarea = document.getElementById('wallets');
+      const wallets = textarea.value.trim().split('\n').map(w => w.trim()).filter(w => w.length > 0);
+
+      if (wallets.length === 0) {
+        alert('Please enter at least one wallet address');
+        return;
+      }
+
+      // Disable button during request
+      checkoutButton.disabled = true;
+      checkoutButton.textContent = 'Processing...';
+
+      try {
+        const response = await fetch('/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ wallets }),
+        });
+
+        const session = await response.json();
+
+        if (session.id) {
+          // Client-side redirect using session ID (original method)
+          stripe.redirectToCheckout({ sessionId: session.id });
+        } else {
+          alert('Error: ' + (session.error || 'Could not create checkout'));
+        }
+      } catch (err) {
+        alert('Network error. Try again.');
+        console.error(err);
+      } finally {
+        checkoutButton.disabled = false;
+        checkoutButton.textContent = 'Start Monitoring';
+      }
+    });
+
+    // Optional: Connect button can open Telegram bot or do nothing if handled elsewhere
+    document.querySelector('.connect-btn').addEventListener('click', () => {
+      window.location.href = 'https://t.me/EthHackAIBot'; // Or your bot link
     });
   </script>
 </body>
