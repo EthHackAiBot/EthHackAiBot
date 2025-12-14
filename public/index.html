@@ -58,7 +58,7 @@
 
       const wallets = text.split('\n').filter(w => w.trim());
 
-      const stripe = Stripe('pk_live_...'); // Replace with your Live publishable key
+      const stripe = Stripe('pk_live_...'); // Replace 'pk_live_...' with your actual Live publishable key
 
       try {
         const response = await fetch('/create-checkout-session', {
