@@ -1,77 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EthHack AI Bot – Lifetime Access</title>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0ff; text-align: center; padding: 40px; margin: 0; }
-    h1 { font-size: 2.8rem; margin-bottom: 10px; }
-    p { font-size: 1.3rem; max-width: 700px; margin: 20px auto; opacity: 0.9; }
-    .container { max-width: 800px; margin: 0 auto; }
-    input[type="text"] { width: 80%; max-width: 600px; padding: 16px; font-size: 1.2rem; border-radius: 12px; border: none; margin: 30px 0; }
-    button { background: #00ff9d; color: #000; padding: 16px 32px; font-size: 1.4rem; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,255,157,0.4); }
-    button:hover { background: #00cc7a; }
-    .success { color: #00ff9d; font-size: 1.5rem; margin: 30px 0; display: none; }
-    .telegram { margin-top: 40px; }
-    .telegram a { display: inline-block; background: #0088cc; color: white; padding: 16px 40px; font-size: 1.5rem; text-decoration: none; border-radius: 12px; margin-top: 20px; }
-    .telegram a:hover { background: #006699; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>EthHack AI Bot</h1>
-    <p id="welcome">Enter the wallet address(es) you want to protect (one per line)</p>
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+// No need for publishable key anymore if using direct URL redirect!
 
-    <div id="successMsg" class="success">
-      <strong>Payment confirmed! Lifetime access activated</strong><br><br>
-      Monitoring started for the wallet(s) below. You will receive instant Telegram alerts.
-    </div>
+document.querySelector('#start-monitoring-btn').addEventListener('click', async () => {
+  // Collect wallets from textarea (one per line)
+  const textarea = document.querySelector('textarea'); // adjust selector if needed
+  const walletLines = textarea.value.trim().split('\n');
+  const wallets = walletLines.map(line => line.trim()).filter(line => line.length > 0);
 
-    <textarea id="wallets" rows="6" placeholder="0x1234...&#10;0x5678..."></textarea><br/>
+  if (wallets.length === 0) {
+    alert('Please enter at least one wallet address');
+    return;
+  }
 
-    <button onclick="startMonitoring()">Start Monitoring</button>
+  // Get Telegram user_id - you MUST have this from Telegram WebApp or login
+  // Example if using Telegram Mini App / WebApp:
+  const user_id = Telegram.WebApp.initDataUnsafe.user?.id;
 
-    <div class="telegram">
-      <p>Click below to connect your alerts to Telegram</p>
-      <a href="https://t.me/EthHackAiBot" target="_blank">Connect me to Telegram alerts</a>
-    </div>
+  // If not using Telegram WebApp, you need another way to get user_id (e.g., prompt or query param)
+  if (!user_id) {
+    alert('Unable to get your Telegram user ID. Open this site from the bot.');
+    return;
+  }
 
-    <p style="margin-top:60px; font-size:0.9rem; opacity:0.6;">
-      Lifetime access • No subscriptions • Real-time rug/honeypot/phishing protection
-    </p>
-  </div>
+  try {
+    const response = await fetch('/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallets, user_id })
+    });
 
-  <script src="https://js.stripe.com/v3/"></script>
-  <script>
-    // If user came from Stripe success page → auto-show success message
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('status') === 'success') {
-      document.getElementById('welcome').style.display = 'none';
-      document.getElementById('successMsg').style.display = 'block';
-      document.title = 'EthHack – Lifetime Access Activated';
+    const data = await response.json();
+
+    if (data.url) {
+      // NEW: Direct redirect to Stripe Checkout URL
+      window.location.href = data.url;
+    } else {
+      alert('Error: ' + (data.error || 'Failed to create payment'));
     }
-
-    async function startMonitoring() {
-      const text = document.getElementById('wallets').value.trim();
-      if (!text) return alert('Please enter at least one wallet address');
-
-      const wallets = text.split('\n').filter(w => w.trim());
-
-      const stripe = Stripe('pk_live_...'); // Replace 'pk_live_...' with your actual Live publishable key
-
-      try {
-        const response = await fetch('/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallets })
-        });
-        const { id } = await response.json();
-        stripe.redirectToCheckout({ sessionId: id });
-      } catch (err) {
-        alert('Error: ' + err.message);
-      }
-    }
-  </script>
-</body>
-</html>
+  } catch (err) {
+    console.error(err);
+    alert('Network error - check connection or try again');
+  }
+});
+</script>
