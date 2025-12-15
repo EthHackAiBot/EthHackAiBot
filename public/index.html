@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EthHack Ai Bot</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <style>
     body {
@@ -79,10 +80,8 @@
 </head>
 <body>
 
-  <!-- Logo -->
   <img src="/logo.jpg" alt="EthHack Ai Bot Logo" class="logo-img">
 
-  <!-- New slogan right under the logo -->
   <div class="slogan">Don't get Rekt - Get EthHack!</div>
 
   <h2>Over 50+ EVM's covered</h2>
@@ -101,12 +100,27 @@
   <button class="connect-btn">Connect me to Telegram alerts</button>
 
   <script>
+    Telegram.WebApp.ready();
+
+    // === AUTO-SAVE WALLETS (so they don't lose typed addresses when switching tabs) ===
+    const textarea = document.getElementById('wallets');
+
+    // Load saved wallets when the page opens
+    window.addEventListener('load', () => {
+      const savedWallets = localStorage.getItem('ethhack_wallets');
+      if (savedWallets) {
+        textarea.value = savedWallets;
+      }
+    });
+
+    // Save wallets every time user types something
+    textarea.addEventListener('input', () => {
+      localStorage.setItem('ethhack_wallets', textarea.value);
+    });
+
     const stripe = Stripe('pk_live_XXXXXXXXXXXXXXXXXXXXXXXX'); // Replace with your actual publishable key
 
-    const checkoutButton = document.getElementById('checkout-button');
-
-    checkoutButton.addEventListener('click', async () => {
-      const textarea = document.getElementById('wallets');
+    document.getElementById('checkout-button').addEventListener('click', async () => {
       const wallets = textarea.value.trim().split('\n').map(w => w.trim()).filter(w => w.length > 0);
 
       if (wallets.length === 0) {
@@ -114,36 +128,44 @@
         return;
       }
 
-      checkoutButton.disabled = true;
-      checkoutButton.textContent = 'Processing...';
+      const user_id = Telegram.WebApp.initDataUnsafe?.user?.id;
+
+      if (!user_id) {
+        alert('Please open this site from the EthHack AI Bot in Telegram.');
+        return;
+      }
+
+      const button = document.getElementById('checkout-button');
+      button.disabled = true;
+      button.textContent = 'Processing...';
 
       try {
         const response = await fetch('/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallets })
+          body: JSON.stringify({ wallets, user_id })
         });
 
         const session = await response.json();
 
-        if (session.id) {
-          stripe.redirectToCheckout({ sessionId: session.id });
-        } else if (session.url) {
+        if (session.url) {
           window.location.href = session.url;
+        } else if (session.id) {
+          stripe.redirectToCheckout({ sessionId: session.id });
         } else {
-          alert('Error: ' + (session.error || 'Could not create checkout'));
+          alert('Error: ' + (session.error || 'Payment failed'));
         }
       } catch (err) {
         alert('Network error. Try again.');
         console.error(err);
       } finally {
-        checkoutButton.disabled = false;
-        checkoutButton.textContent = 'Start Monitoring';
+        button.disabled = false;
+        button.textContent = 'Start Monitoring';
       }
     });
 
     document.querySelector('.connect-btn').addEventListener('click', () => {
-      window.location.href = 'https://t.me/EthHackAIBot'; // Update with your exact bot username
+      window.location.href = 'https://t.me/EthHackAIBot';
     });
   </script>
 </body>
