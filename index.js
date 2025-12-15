@@ -1,4 +1,4 @@
-// index.js - Full final code for EthHackAiBot (simple, working, real USD via Stripe)
+// index.js - Full fixed code (real USD via Stripe, no more unknown arguments error)
 const express = require('express');
 const stripe = require('stripe');
 
@@ -12,17 +12,16 @@ const stripeClient = stripe(STRIPE_SECRET_KEY);
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
-// Optional config (you can set in Render Environment)
 const SUCCESS_URL = process.env.SUCCESS_URL || 'https://bot.ethhack.com?status=success';
 const CANCEL_URL = process.env.CANCEL_URL || 'https://bot.ethhack.com?status=cancel';
-const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO'; // Your $19 one-time price ID
+const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO';
 
 // Serve the main site
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Create Stripe Checkout session
+// Create Checkout Session
 app.post('/create-checkout-session', async (req, res) => {
   const { wallets, user_id } = req.body;
 
@@ -56,7 +55,7 @@ app.post('/create-checkout-session', async (req, res) => {
       },
       expires_at: Math.floor(Date.now() / 1000) + 1800, // 30 minutes
     }, {
-      idempotency_key: idempotencyKey
+      idempotencyKey: idempotencyKey  // FIXED: camelCase, no underscore
     });
 
     console.log('Session created:', session.id);
@@ -67,7 +66,7 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// Telegram webhook - responds to ANY message (including first open)
+// Telegram webhook - responds to ANY message
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
 
