@@ -14,6 +14,25 @@
       text-align: center;
       margin: 0;
       padding: 20px;
+      /* Force visible scrollbar on the right side */
+      overflow-y: scroll;               /* Always show vertical scrollbar */
+      height: 100vh;                    /* Full height to enable scrolling */
+    }
+    /* Style the scrollbar to make it obvious and nice */
+    body::-webkit-scrollbar {
+      width: 12px;
+    }
+    body::-webkit-scrollbar-track {
+      background: #111;
+      border-radius: 10px;
+    }
+    body::-webkit-scrollbar-thumb {
+      background: linear-gradient(#00ffff, #00bfff);
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+    }
+    body::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(#00bfff, #0099cc);
     }
     .logo-img {
       max-width: 300px;
