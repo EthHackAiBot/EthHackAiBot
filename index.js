@@ -1,4 +1,4 @@
-// index.js - Final fixed: Welcome on every message (HTML safe) + detailed risks
+// index.js - Final: Welcome on every message (always runs) + detailed risks + debug logging
 
 const express = require('express');
 const stripe = require('stripe');
@@ -90,15 +90,20 @@ app.post('/webhook', async (req, res) => {
     const message = update.message;
     const chatId = message.chat.id;
     const text = message.text || '';
+    console.log(`Received message from ${chatId}: ${text}`); // Debug log
+
     const send = async (msg, options = {}) => {
       try {
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: chatId, parse_mode: 'HTML', ...options, text: msg })
         });
+        if (!response.ok) {
+          console.error('Telegram send failed:', await response.text());
+        }
       } catch (err) {
-        console.error('Send message failed:', err);
+        console.error('Send message failed:', err.message);
       }
     };
 
@@ -106,7 +111,8 @@ app.post('/webhook', async (req, res) => {
     if (text.toLowerCase().startsWith('/checktoken')) {
       const parts = text.trim().split(' ');
       if (parts.length !== 3) {
-        return send('Usage: /checktoken <chain> <address>\nExample: /checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83');
+        await send('Usage: /checktoken <chain> <address>\nExample: /checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83');
+        return;
       }
 
       const chainInput = parts[1].toLowerCase();
@@ -116,7 +122,8 @@ app.post('/webhook', async (req, res) => {
       const chainId = chainMap[chainInput];
 
       if (!chainId) {
-        return send('Supported chains: eth, bsc, polygon, base, arbitrum');
+        await send('Supported chains: eth, bsc, polygon, base, arbitrum');
+        return;
       }
 
       await send('🔍 Scanning token for threats...');
@@ -124,7 +131,8 @@ app.post('/webhook', async (req, res) => {
       const info = await checkTokenRisk(chainId, address);
 
       if (!info) {
-        return send('❌ Token not found or API error.');
+        await send('❌ Token not found or API error.');
+        return;
       }
 
       const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
@@ -147,10 +155,11 @@ app.post('/webhook', async (req, res) => {
         msg += '\n<strong>Upgrade to Pro for instant monitoring across all your wallets!</strong>';
       }
 
-      return send(msg);
+      await send(msg);
+      return;
     }
 
-    // Full welcome on EVERY message (fixed HTML)
+    // Full welcome on EVERY message (always runs)
     await send(
       '🔴\n<strong>Welcome to EthHack — Don\'t Get Rekt!</strong>\n\n'
       + 'Real-time protection against rug pulls, honeypots, phishing contracts, malicious approvals, flash-loan attacks, and more across 50+ EVM chains.\n\n'
