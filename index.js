@@ -1,6 +1,8 @@
-// index.js - Full fixed code (real USD via Stripe, no more unknown arguments error)
+// index.js - Full upgraded code: Site + Stripe + Webhook Telegram bot + Live GoPlus Security Alerts
+
 const express = require('express');
 const stripe = require('stripe');
+const axios = require('axios');
 
 const app = express();
 
@@ -15,6 +17,18 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const SUCCESS_URL = process.env.SUCCESS_URL || 'https://bot.ethhack.com?status=success';
 const CANCEL_URL = process.env.CANCEL_URL || 'https://bot.ethhack.com?status=cancel';
 const PRICE_ID = process.env.PRICE_ID || 'price_1Sdv0cB4q90VhcD0njTotzmO';
+
+// GoPlusLabs token security check
+async function checkTokenRisk(chainId, address) {
+  try {
+    const url = `https://api.gopluslabs.io/api/v1/token_security/${chainId}?contract_addresses=${address}`;
+    const response = await axios.get(url, { timeout: 10000 });
+    return response.data.result ? response.data.result[address.toLowerCase()] : null;
+  } catch (error) {
+    console.error('GoPlus API error:', error.message);
+    return null;
+  }
+}
 
 // Serve the main site
 app.get('/', (req, res) => {
@@ -55,7 +69,7 @@ app.post('/create-checkout-session', async (req, res) => {
       },
       expires_at: Math.floor(Date.now() / 1000) + 1800, // 30 minutes
     }, {
-      idempotencyKey: idempotencyKey  // FIXED: camelCase, no underscore
+      idempotencyKey: idempotencyKey
     });
 
     console.log('Session created:', session.id);
@@ -66,35 +80,89 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// Telegram webhook - responds to ANY message
+// Telegram webhook
 app.post('/webhook', async (req, res) => {
-  res.sendStatus(200);
+  res.sendStatus(200); // Ack immediately
 
   const update = req.body;
 
   if (update.message) {
-    const chatId = update.message.chat.id;
+    const message = update.message;
+    const chatId = message.chat.id;
+    const text = message.text || '';
+    const send = async (msg, options = {}) => {
+      try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, parse_mode: 'HTML', ...options, text: msg })
+        });
+      } catch (err) {
+        console.error('Send message failed:', err);
+      }
+    };
 
-    try {
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: 'Welcome to EthHack AI Bot! 🛡️\n\n'
-              + "Don't get Rekt — Get EthHack!\n\n"
-              + 'Lifetime protection for $19 one-time payment.\n'
-              + 'Real-time alerts for rug pulls, honeypots, and phishing across 50+ EVM chains.',
-          reply_markup: {
-            inline_keyboard: [[
-              { text: 'Upgrade to Lifetime Pro 💳', web_app: { url: 'https://bot.ethhack.com' } }
-            ]]
-          }
-        })
-      });
-    } catch (err) {
-      console.error('Failed to send message:', err);
+    // Handle /checktoken command
+    if (text.toLowerCase().startsWith('/checktoken')) {
+      const parts = text.trim().split(' ');
+      if (parts.length !== 3) {
+        return send('Usage: /checktoken <chain> <address>\nExample: /checktoken bsc 0x022d9995f0f3070341938de58509168ce5f1bc9c');
+      }
+
+      const chainInput = parts[1].toLowerCase();
+      const address = parts[2].toLowerCase();
+
+      const chainMap = { eth: 1, ethereum: 1, bsc: 56, polygon: 137, base: 8453, arbitrum: 42161 };
+      const chainId = chainMap[chainInput];
+
+      if (!chainId) {
+        return send('Supported chains: eth, bsc, polygon, base, arbitrum');
+      }
+
+      await send('🔍 Scanning token for threats...');
+
+      const info = await checkTokenRisk(chainId, address);
+
+      if (!info) {
+        return send('❌ Token not found or API error.');
+      }
+
+      const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+      let msg = `<strong>${info.token_name || 'Unknown Token'} (${shortAddr})</strong>\n\n`;
+
+      let hasRisk = false;
+
+      if (info.is_honeypot === '1') { msg += '🚨 <b>HONEYPOT DETECTED — DO NOT BUY</b>\n'; hasRisk = true; }
+      if (info.is_proxy === '1') { msg += '⚠️ Proxy/Upgradable Contract\n'; hasRisk = true; }
+      if (info.owner_renounced === '0') { msg += '⚠️ Ownership Not Renounced\n'; hasRisk = true; }
+      if (info.lp_lock === '0' || (info.lp_locked_percentage && parseFloat(info.lp_locked_percentage) < 50)) { msg += '⚠️ Low or No Liquidity Lock\n'; hasRisk = true; }
+      if (info.buy_tax && parseFloat(info.buy_tax) > 20) { msg += `⚠️ High Buy Tax: ${info.buy_tax}%\n`; hasRisk = true; }
+      if (info.sell_tax && parseFloat(info.sell_tax) > 20) { msg += `⚠️ High Sell Tax: ${info.sell_tax}%\n`; hasRisk = true; }
+
+      if (!hasRisk) {
+        msg += '✅ No major risks detected.';
+      } else {
+        msg += '\n<strong>Upgrade to Pro for instant monitoring across all your wallets!</strong>';
+      }
+
+      return send(msg);
     }
+
+    // Default welcome message for any other message
+    await send(
+      'Welcome to EthHack AI Bot! 🛡️\n\n'
+      + "Don't get Rekt — Get EthHack!\n\n"
+      + 'Lifetime protection for $19 one-time payment.\n'
+      + 'Real-time alerts for rug pulls, honeypots, and phishing across 50+ EVM chains.\n\n'
+      + '<b>Use /checktoken <chain> <address> to scan any token now!</b>',
+      {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: 'Upgrade to Lifetime Pro 💳', web_app: { url: 'https://bot.ethhack.com' } }
+          ]]
+        }
+      }
+    );
   }
 });
 
