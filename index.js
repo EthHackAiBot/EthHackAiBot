@@ -1,4 +1,4 @@
-// index.js - Final: Welcome on every message (always runs) + detailed risks + debug logging
+// index.js - Plain text welcome (no HTML issues) + detailed risks
 
 const express = require('express');
 const stripe = require('stripe');
@@ -90,20 +90,15 @@ app.post('/webhook', async (req, res) => {
     const message = update.message;
     const chatId = message.chat.id;
     const text = message.text || '';
-    console.log(`Received message from ${chatId}: ${text}`); // Debug log
-
     const send = async (msg, options = {}) => {
       try {
-        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, parse_mode: 'HTML', ...options, text: msg })
+          body: JSON.stringify({ chat_id: chatId, ...options, text: msg })
         });
-        if (!response.ok) {
-          console.error('Telegram send failed:', await response.text());
-        }
       } catch (err) {
-        console.error('Send message failed:', err.message);
+        console.error('Send message failed:', err);
       }
     };
 
@@ -136,11 +131,11 @@ app.post('/webhook', async (req, res) => {
       }
 
       const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
-      let msg = `<strong>${info.token_name || 'Unknown Token'} (${shortAddr})</strong>\n\n`;
+      let msg = `*${info.token_name || 'Unknown Token'} (${shortAddr})*\n\n`;
 
       let hasRisk = false;
 
-      if (info.is_honeypot === '1') { msg += '🚨 <b>HONEYPOT DETECTED — DO NOT BUY</b>\n'; hasRisk = true; }
+      if (info.is_honeypot === '1') { msg += '🚨 *HONEYPOT DETECTED — DO NOT BUY*\n'; hasRisk = true; }
       if (info.is_proxy === '1') { msg += '⚠️ Proxy/Upgradable Contract (high rug risk)\n'; hasRisk = true; }
       if (info.is_open_source === '0') { msg += '⚠️ Contract Not Verified/Open Source\n'; hasRisk = true; }
       if (info.owner_renounced === '0') { msg += '⚠️ Ownership Not Renounced\n'; hasRisk = true; }
@@ -152,18 +147,18 @@ app.post('/webhook', async (req, res) => {
       if (!hasRisk) {
         msg += '✅ No major risks detected.';
       } else {
-        msg += '\n<strong>Upgrade to Pro for instant monitoring across all your wallets!</strong>';
+        msg += '\n*Upgrade to Pro for instant monitoring across all your wallets!*';
       }
 
-      await send(msg);
+      await send(msg, { parse_mode: 'Markdown' });
       return;
     }
 
-    // Full welcome on EVERY message (always runs)
+    // Plain text welcome on EVERY message
     await send(
-      '🔴\n<strong>Welcome to EthHack — Don\'t Get Rekt!</strong>\n\n'
+      '🔴 Welcome to EthHack — Don\'t Get Rekt!\n\n'
       + 'Real-time protection against rug pulls, honeypots, phishing contracts, malicious approvals, flash-loan attacks, and more across 50+ EVM chains.\n\n'
-      + '<b>Scan any token instantly:</b>\n/checktoken <chain> <address>\n\n'
+      + 'Scan any token instantly:\n/checktoken <chain> <address>\n\n'
       + 'Example:\n/checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83\n\n'
       + 'Lifetime Pro: $19 one-time — instant alerts for all your wallets.',
       {
