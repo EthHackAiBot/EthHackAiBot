@@ -1,4 +1,4 @@
-// index.js - Enhanced: Full welcome on every message + more detailed risk flags (fixed syntax)
+// index.js - Final: Full welcome on every message + detailed risks + syntax fixed
 
 const express = require('express');
 const stripe = require('stripe');
@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Create Checkout Session (unchanged)
+// Create Checkout Session
 app.post('/create-checkout-session', async (req, res) => {
   const { wallets, user_id } = req.body;
 
@@ -102,7 +102,7 @@ app.post('/webhook', async (req, res) => {
       }
     };
 
-    // Handle /checktoken command first
+    // /checktoken command
     if (text.toLowerCase().startsWith('/checktoken')) {
       const parts = text.trim().split(' ');
       if (parts.length !== 3) {
@@ -150,7 +150,7 @@ app.post('/webhook', async (req, res) => {
       return send(msg);
     }
 
-    // Default: Full welcome message on EVERY message (hi, /start, random text)
+    // Full welcome on EVERY message
     await send(
       '🔴 <strong>Welcome to EthHack — Don\'t Get Rekt!</strong>\n\n'
       + 'Real-time protection against rug pulls, honeypots, phishing contracts, malicious approvals, flash-loan attacks, and more across 50+ EVM chains.\n\n'
