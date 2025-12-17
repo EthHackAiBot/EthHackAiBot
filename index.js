@@ -1,4 +1,4 @@
-// index.js - Final fixed: Welcome on every message + detailed /checktoken risks
+// index.js - Final fixed: Welcome on every message (HTML safe) + detailed risks
 
 const express = require('express');
 const stripe = require('stripe');
@@ -150,9 +150,9 @@ app.post('/webhook', async (req, res) => {
       return send(msg);
     }
 
-    // Full welcome on EVERY message (hi, /start, random text)
+    // Full welcome on EVERY message (fixed HTML)
     await send(
-      '🔴 <strong>Welcome to EthHack — Don\'t Get Rekt!</strong>\n\n'
+      '🔴\n<strong>Welcome to EthHack — Don\'t Get Rekt!</strong>\n\n'
       + 'Real-time protection against rug pulls, honeypots, phishing contracts, malicious approvals, flash-loan attacks, and more across 50+ EVM chains.\n\n'
       + '<b>Scan any token instantly:</b>\n/checktoken <chain> <address>\n\n'
       + 'Example:\n/checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83\n\n'
