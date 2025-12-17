@@ -1,4 +1,4 @@
-// index.js - Full upgraded code: Site + Stripe + Webhook Telegram bot + Live GoPlus Security Alerts
+// index.js - Enhanced: Full welcome on every message + more detailed risk flags
 
 const express = require('express');
 const stripe = require('stripe');
@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Create Checkout Session
+// Create Checkout Session (unchanged)
 app.post('/create-checkout-session', async (req, res) => {
   const { wallets, user_id } = req.body;
 
@@ -67,7 +67,7 @@ app.post('/create-checkout-session', async (req, res) => {
         wallets: wallets.join(','),
         telegram_user_id: String(user_id),
       },
-      expires_at: Math.floor(Date.now() / 1000) + 1800, // 30 minutes
+      expires_at: Math.floor(Date.now() / 1000) + 1800,
     }, {
       idempotencyKey: idempotencyKey
     });
@@ -82,7 +82,7 @@ app.post('/create-checkout-session', async (req, res) => {
 
 // Telegram webhook
 app.post('/webhook', async (req, res) => {
-  res.sendStatus(200); // Ack immediately
+  res.sendStatus(200);
 
   const update = req.body;
 
@@ -102,11 +102,11 @@ app.post('/webhook', async (req, res) => {
       }
     };
 
-    // Handle /checktoken command
+    // Handle /checktoken command first
     if (text.toLowerCase().startsWith('/checktoken')) {
       const parts = text.trim().split(' ');
       if (parts.length !== 3) {
-        return send('Usage: /checktoken <chain> <address>\nExample: /checktoken bsc 0x022d9995f0f3070341938de58509168ce5f1bc9c');
+        return send('Usage: /checktoken <chain> <address>\nExample: /checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83');
       }
 
       const chainInput = parts[1].toLowerCase();
@@ -133,11 +133,13 @@ app.post('/webhook', async (req, res) => {
       let hasRisk = false;
 
       if (info.is_honeypot === '1') { msg += '🚨 <b>HONEYPOT DETECTED — DO NOT BUY</b>\n'; hasRisk = true; }
-      if (info.is_proxy === '1') { msg += '⚠️ Proxy/Upgradable Contract\n'; hasRisk = true; }
+      if (info.is_proxy === '1') { msg += '⚠️ Proxy/Upgradable Contract (high rug risk)\n'; hasRisk = true; }
+      if (info.is_open_source === '0') { msg += '⚠️ Contract Not Verified/Open Source\n'; hasRisk = true; }
       if (info.owner_renounced === '0') { msg += '⚠️ Ownership Not Renounced\n'; hasRisk = true; }
       if (info.lp_lock === '0' || (info.lp_locked_percentage && parseFloat(info.lp_locked_percentage) < 50)) { msg += '⚠️ Low or No Liquidity Lock\n'; hasRisk = true; }
-      if (info.buy_tax && parseFloat(info.buy_tax) > 20) { msg += `⚠️ High Buy Tax: ${info.buy_tax}%\n`; hasRisk = true; }
-      if (info.sell_tax && parseFloat(info.sell_tax) > 20) { msg += `⚠️ High Sell Tax: ${info.sell_tax}%\n`; hasRisk = true; }
+      if (info.holder_count && info.holder_count < 100) { msg += '⚠️ Very Low Holder Count\n'; hasRisk = true; }
+      if (info.buy_tax && parseFloat(info.buy_tax) > 20) { msg += `⚠️ High Buy Tax: ${info.buy_tax}%\n'; hasRisk = true; }
+      if (info.sell_tax && parseFloat(info.sell_tax) > 20) { msg += `⚠️ High Sell Tax: ${info.sell_tax}%\n'; hasRisk = true; }
 
       if (!hasRisk) {
         msg += '✅ No major risks detected.';
@@ -148,17 +150,17 @@ app.post('/webhook', async (req, res) => {
       return send(msg);
     }
 
-    // Default welcome message for any other message
+    // Default: Full welcome message on EVERY message (hi, /start, random text)
     await send(
-      'Welcome to EthHack AI Bot! 🛡️\n\n'
-      + "Don't get Rekt — Get EthHack!\n\n"
-      + 'Lifetime protection for $19 one-time payment.\n'
-      + 'Real-time alerts for rug pulls, honeypots, and phishing across 50+ EVM chains.\n\n'
-      + '<b>Use /checktoken <chain> <address> to scan any token now!</b>',
+      '🔴 <strong>Welcome to EthHack — Don\'t Get Rekt!</strong>\n\n'
+      + 'Real-time protection against rug pulls, honeypots, phishing contracts, malicious approvals, flash-loan attacks, and more across 50+ EVM chains.\n\n'
+      + '<b>Scan any token instantly:</b>\n/checktoken <chain> <address>\n\n'
+      + 'Example:\n/checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83\n\n'
+      + 'Lifetime Pro: $19 one-time — instant alerts for all your wallets.',
       {
         reply_markup: {
           inline_keyboard: [[
-            { text: 'Upgrade to Lifetime Pro 💳', web_app: { url: 'https://bot.ethhack.com' } }
+            { text: 'Upgrade to Lifetime Pro 💳 ($19 one-time)', web_app: { url: 'https://bot.ethhack.com' } }
           ]]
         }
       }
