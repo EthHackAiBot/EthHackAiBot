@@ -1,4 +1,4 @@
-// index.js - Fixed Render PostgreSQL connection + Pro storage + monitoring
+// index.js - Final fixed Render PostgreSQL connection + Pro storage + monitoring
 
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -12,18 +12,17 @@ app.use(express.static('public'));
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PRICE_ID = process.env.PRICE_ID;
 
-// PostgreSQL connection - Correct for Render
+// PostgreSQL connection - Always use SSL false reject for Render
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes('amazonaws.com') ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false }
 });
 
-// Test connection and create table
+// Create table if not exists
 (async () => {
   try {
     const client = await pool.connect();
     console.log('PostgreSQL connected successfully');
-
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -38,7 +37,7 @@ const pool = new Pool({
     console.log('Users table ready');
     client.release();
   } catch (err) {
-    console.error('PostgreSQL connection or table error:', err);
+    console.error('PostgreSQL error:', err);
   }
 })();
 
@@ -157,8 +156,8 @@ app.post('/webhook', async (req, res) => {
       if (info.owner_renounced === '0') { msg += '⚠️ Ownership Not Renounced\n'; hasRisk = true; }
       if (info.lp_lock === '0' || (info.lp_locked_percentage && parseFloat(info.lp_locked_percentage) < 50)) { msg += '⚠️ Low or No Liquidity Lock\n'; hasRisk = true; }
       if (info.holder_count && info.holder_count < 100) { msg += '⚠️ Very Low Holder Count\n'; hasRisk = true; }
-      if (info.buy_tax && parseFloat(info.buy_tax) > 20) { msg += `⚠️ High Buy Tax: ${info.buy_tax}%\n`; hasRisk = true; }
-      if (info.sell_tax && parseFloat(info.sell_tax) > 20) { msg += `⚠️ High Sell Tax: ${info.sell_tax}%\n`; hasRisk = true; }
+      if (info.buy_tax && parseFloat(info.buy_tax) > 20) { msg += `⚠️ High Buy Tax: ${info.buy_tax}%\n'; hasRisk = true; }
+      if (info.sell_tax && parseFloat(info.sell_tax) > 20) { msg += `⚠️ High Sell Tax: ${info.sell_tax}%\n'; hasRisk = true; }
 
       if (!hasRisk) {
         msg += '✅ No major risks detected.';
