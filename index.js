@@ -1,4 +1,4 @@
-// index.js - Fixed full slogan in welcome + all features
+// index.js - Fixed full slogan "Don't get Rekt - Get EthHack!"
 
 const express = require('express');
 const stripe = require('stripe');
