@@ -1,4 +1,4 @@
-// index.js - Plain text welcome (no HTML issues) + detailed risks
+// index.js - Fixed full slogan in welcome + all features
 
 const express = require('express');
 const stripe = require('stripe');
@@ -95,7 +95,7 @@ app.post('/webhook', async (req, res) => {
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, ...options, text: msg })
+          body: JSON.stringify({ chat_id: chatId, parse_mode: 'Markdown', ...options, text: msg })
         });
       } catch (err) {
         console.error('Send message failed:', err);
@@ -150,15 +150,15 @@ app.post('/webhook', async (req, res) => {
         msg += '\n*Upgrade to Pro for instant monitoring across all your wallets!*';
       }
 
-      await send(msg, { parse_mode: 'Markdown' });
+      await send(msg);
       return;
     }
 
-    // Plain text welcome on EVERY message
+    // Full slogan welcome on EVERY message
     await send(
-      '🔴 Welcome to EthHack — Don\'t Get Rekt!\n\n'
+      '🔴 *Don\'t get Rekt - Get EthHack!*\n\n'
       + 'Real-time protection against rug pulls, honeypots, phishing contracts, malicious approvals, flash-loan attacks, and more across 50+ EVM chains.\n\n'
-      + 'Scan any token instantly:\n/checktoken <chain> <address>\n\n'
+      + '*Scan any token instantly:*\n/checktoken <chain> <address>\n\n'
       + 'Example:\n/checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83\n\n'
       + 'Lifetime Pro: $19 one-time — instant alerts for all your wallets.',
       {
