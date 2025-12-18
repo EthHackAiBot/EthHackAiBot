@@ -1,4 +1,4 @@
-// index.js - Fixed PostgreSQL connection for Render + Pro storage + monitoring
+// index.js - Fixed Render PostgreSQL connection + Pro storage + monitoring
 
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -12,11 +12,11 @@ app.use(express.static('public'));
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PRICE_ID = process.env.PRICE_ID;
 
-// PostgreSQL connection - Fixed SSL for Render
+// PostgreSQL connection - Correct for Render private network + SSL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false  // Required for Render Postgres
+    rejectUnauthorized: false // Required for Render
   }
 });
 
