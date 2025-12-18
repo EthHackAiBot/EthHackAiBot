@@ -1,4 +1,4 @@
-// index.js - Final working code for Render PostgreSQL + Pro storage + monitoring
+//  index.js - Final working code for Render PostgreSQL + Pro storage + monitoring
 
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
