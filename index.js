@@ -1,4 +1,4 @@
-// index.js - Full: Bot + Stripe + Render PostgreSQL Pro storage + auto-monitoring
+// index.js - Fixed PostgreSQL connection for Render + Pro storage + monitoring
 
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -12,13 +12,15 @@ app.use(express.static('public'));
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PRICE_ID = process.env.PRICE_ID;
 
-// PostgreSQL connection (Render provides DATABASE_URL)
+// PostgreSQL connection - Fixed for Render SSL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: {
+    rejectUnauthorized: false // Required for Render Postgres
+  }
 });
 
-// Create table if not exists (run on startup)
+// Create table if not exists
 pool.query(`
   CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
@@ -29,7 +31,8 @@ pool.query(`
     stripe_session_id TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
-`).catch(err => console.error('Table creation error:', err));
+`).then(() => console.log('Users table ready'))
+  .catch(err => console.error('Table creation error:', err));
 
 // GoPlus token risk check
 async function checkTokenRisk(chainId, address) {
@@ -86,50 +89,6 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// Stripe webhook for payment success (save user + wallets)
-app.post('/webhook-stripe', express.raw({type: 'application/json'}), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const user_id = session.client_reference_id;
-    const wallets = session.metadata.wallets ? JSON.parse(session.metadata.wallets) : [];
-
-    try {
-      await pool.query(`
-        INSERT INTO users (telegram_id, wallets, is_pro, payment_date, stripe_session_id)
-        VALUES ($1, $2, TRUE, NOW(), $3)
-        ON CONFLICT (telegram_id) DO UPDATE SET
-        wallets = $2,
-        is_pro = TRUE,
-        payment_date = NOW(),
-        stripe_session_id = $3
-      `, [user_id, wallets, session.id]);
-
-      // Send confirmation to user
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: user_id,
-          text: '🎉 Pro activated! Lifetime instant alerts unlocked for your wallets.'
-        })
-      });
-    } catch (err) {
-      console.error('DB save error:', err);
-    }
-  }
-
-  res.json({ received: true });
-});
-
 // Telegram webhook
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
@@ -154,10 +113,57 @@ app.post('/webhook', async (req, res) => {
 
     if (text.toLowerCase().startsWith('/checktoken')) {
       // Your existing /checktoken code here (same as before)
-      // ... (paste from previous working version)
+      const parts = text.trim().split(' ');
+      if (parts.length !== 3) {
+        await send('Usage: /checktoken <chain> <address>\nExample: /checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83');
+        return;
+      }
+
+      const chainInput = parts[1].toLowerCase();
+      const address = parts[2].toLowerCase();
+
+      const chainMap = { eth: 1, ethereum: 1, bsc: 56, polygon: 137, base: 8453, arbitrum: 42161 };
+      const chainId = chainMap[chainInput];
+
+      if (!chainId) {
+        await send('Supported chains: eth, bsc, polygon, base, arbitrum');
+        return;
+      }
+
+      await send('🔍 Scanning token for threats...');
+
+      const info = await checkTokenRisk(chainId, address);
+
+      if (!info) {
+        await send('❌ Token not found or API error.');
+        return;
+      }
+
+      const shortAddr = address.slice(0, 6) + '...' + address.slice(-4);
+      let msg = `*${info.token_name || 'Unknown Token'} (${shortAddr})*\n\n`;
+
+      let hasRisk = false;
+
+      if (info.is_honeypot === '1') { msg += '🚨 *HONEYPOT DETECTED — DO NOT BUY*\n'; hasRisk = true; }
+      if (info.is_proxy === '1') { msg += '⚠️ Proxy/Upgradable Contract (high rug risk)\n'; hasRisk = true; }
+      if (info.is_open_source === '0') { msg += '⚠️ Contract Not Verified/Open Source\n'; hasRisk = true; }
+      if (info.owner_renounced === '0') { msg += '⚠️ Ownership Not Renounced\n'; hasRisk = true; }
+      if (info.lp_lock === '0' || (info.lp_locked_percentage && parseFloat(info.lp_locked_percentage) < 50)) { msg += '⚠️ Low or No Liquidity Lock\n'; hasRisk = true; }
+      if (info.holder_count && info.holder_count < 100) { msg += '⚠️ Very Low Holder Count\n'; hasRisk = true; }
+      if (info.buy_tax && parseFloat(info.buy_tax) > 20) { msg += `⚠️ High Buy Tax: ${info.buy_tax}%\n`; hasRisk = true; }
+      if (info.sell_tax && parseFloat(info.sell_tax) > 20) { msg += `⚠️ High Sell Tax: ${info.sell_tax}%\n`; hasRisk = true; }
+
+      if (!hasRisk) {
+        msg += '✅ No major risks detected.';
+      } else {
+        msg += '\n*Upgrade to Pro for instant monitoring across all your wallets!*';
+      }
+
+      await send(msg);
       return;
     }
 
+    // Welcome on every message
     await send(
       '🔴 *Don\'t get Rekt - Get EthHack!*\n\n'
       + 'Real-time protection against rug pulls, honeypots, phishing contracts, malicious approvals, flash-loan attacks, and more across 50+ EVM chains.\n\n'
@@ -175,22 +181,24 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Background monitoring (every 5 minutes)
+// Background monitoring for Pro users (every 5 minutes)
 setInterval(async () => {
   try {
     const { rows: proUsers } = await pool.query('SELECT telegram_id, wallets FROM users WHERE is_pro = TRUE');
+    console.log(`Monitoring ${proUsers.length} Pro users`);
     for (const user of proUsers) {
       const wallets = user.wallets || [];
       for (const wallet of wallets) {
-        const risk = await checkApprovalRisk(1, wallet); // Example ETH, add multi-chain
+        const risk = await checkApprovalRisk(1, wallet); // Example ETH, add multi-chain later
         if (risk) {
           const msg = `🚨 RISK DETECTED on wallet ${wallet.slice(0,6)}...${wallet.slice(-4)}\n`
-            + `Malicious approvals found — revoke now!`;
+            + `Malicious approvals found — revoke immediately!`;
           await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: user.telegram_id, text: msg })
           });
+          console.log(`Alert sent to ${user.telegram_id}`);
         }
       }
     }
