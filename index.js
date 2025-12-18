@@ -12,11 +12,11 @@ app.use(express.static('public'));
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PRICE_ID = process.env.PRICE_ID;
 
-// PostgreSQL connection - Fixed for Render SSL
+// PostgreSQL connection - Fixed SSL for Render
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false // Required for Render Postgres
+    rejectUnauthorized: false  // Required for Render Postgres
   }
 });
 
@@ -112,7 +112,6 @@ app.post('/webhook', async (req, res) => {
     };
 
     if (text.toLowerCase().startsWith('/checktoken')) {
-      // Your existing /checktoken code here (same as before)
       const parts = text.trim().split(' ');
       if (parts.length !== 3) {
         await send('Usage: /checktoken <chain> <address>\nExample: /checktoken bsc 0x55d58a4d8271ae86f3b4b79ce959ed14737c8c83');
@@ -189,7 +188,7 @@ setInterval(async () => {
     for (const user of proUsers) {
       const wallets = user.wallets || [];
       for (const wallet of wallets) {
-        const risk = await checkApprovalRisk(1, wallet); // Example ETH, add multi-chain later
+        const risk = await checkApprovalRisk(1, wallet); // Example ETH, add multi-chain
         if (risk) {
           const msg = `🚨 RISK DETECTED on wallet ${wallet.slice(0,6)}...${wallet.slice(-4)}\n`
             + `Malicious approvals found — revoke immediately!`;
