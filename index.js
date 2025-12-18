@@ -1,4 +1,4 @@
-// index.js - Fixed syntax error in High Sell Tax line + Render PostgreSQL + Pro storage + monitoring
+// index.js - Final: Bot + Stripe + Render PostgreSQL Pro storage + auto-monitoring
 
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
