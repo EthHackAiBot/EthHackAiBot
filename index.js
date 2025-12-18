@@ -1,4 +1,4 @@
-//  index.js - Final working code for Render PostgreSQL + Pro storage + monitoring
+// index.js - Final fixed Render PostgreSQL connection + Pro storage + monitoring
 
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -12,17 +12,17 @@ app.use(express.static('public'));
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PRICE_ID = process.env.PRICE_ID;
 
-// PostgreSQL connection - works on Render
+// PostgreSQL connection - Use full DATABASE_URL for Render private network + SSL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// Create users table
+// Create table if not exists
 (async () => {
   try {
     const client = await pool.connect();
-    console.log('PostgreSQL connected');
+    console.log('PostgreSQL connected successfully');
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -37,7 +37,7 @@ const pool = new Pool({
     console.log('Users table ready');
     client.release();
   } catch (err) {
-    console.error('DB error:', err);
+    console.error('PostgreSQL error:', err);
   }
 })();
 
@@ -53,7 +53,7 @@ async function checkTokenRisk(chainId, address) {
   }
 }
 
-// Approval risk check for wallet
+// Approval risk check for wallet (Pro monitoring)
 async function checkApprovalRisk(chainId, wallet) {
   try {
     const url = `https://api.gopluslabs.io/api/v1/approval_security/${chainId}?addresses=${wallet}`;
