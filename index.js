@@ -12,27 +12,35 @@ app.use(express.static('public'));
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const PRICE_ID = process.env.PRICE_ID;
 
-// PostgreSQL connection - Correct for Render private network + SSL
+// PostgreSQL connection - Correct for Render
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // Required for Render
-  }
+  ssl: process.env.DATABASE_URL.includes('amazonaws.com') ? { rejectUnauthorized: false } : false
 });
 
-// Create table if not exists
-pool.query(`
-  CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    telegram_id BIGINT UNIQUE NOT NULL,
-    wallets JSONB DEFAULT '[]',
-    is_pro BOOLEAN DEFAULT FALSE,
-    payment_date TIMESTAMP,
-    stripe_session_id TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  )
-`).then(() => console.log('Users table ready'))
-  .catch(err => console.error('Table creation error:', err));
+// Test connection and create table
+(async () => {
+  try {
+    const client = await pool.connect();
+    console.log('PostgreSQL connected successfully');
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        telegram_id BIGINT UNIQUE NOT NULL,
+        wallets JSONB DEFAULT '[]',
+        is_pro BOOLEAN DEFAULT FALSE,
+        payment_date TIMESTAMP,
+        stripe_session_id TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Users table ready');
+    client.release();
+  } catch (err) {
+    console.error('PostgreSQL connection or table error:', err);
+  }
+})();
 
 // GoPlus token risk check
 async function checkTokenRisk(chainId, address) {
